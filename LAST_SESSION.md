@@ -6,47 +6,75 @@
 | ---------------- | ------------------------------------------- |
 | **Date**         | 2026-04-29                                  |
 | **Agent**        | Antigravity                                 |
-| **Session Type** | Session 9: Bilingual Migration & Production Readiness Audit |
+| **Session Type** | Session 13: Header Navigation Fixes (3 issues) |
 
 ---
 
 ## What Was Done
 
-### 1. Unified Bilingual Data Architecture Migration
+Fixed three related issues with the Header navigation menu in `src/components/Navigation/Navigation.tsx`.
 
-Completed the platform-wide migration to the strict `BilingualText` schema for all data entities.
+### 1. Fixed: Active State Not Working for Query Param Links
 
-#### Shared Package Enhancements (@webpad/shared)
-- Migrated `ActivityLog`, `Report`, and `Transaction` interfaces to use `BilingualText` for all names, descriptions, and details.
-- Added `priority` field to `Report` for administrative parity.
-- Consolidated `SharedData` interface into `types.ts` to ensure a single source of truth.
-- Synchronized `mock data.ts` in the shared package with the new bilingual schema.
+**Root Cause:**
+The `isActive` function only compared `location.pathname` with the link path, ignoring query parameters.
 
-#### UI Property Access Updates
-- Verified and updated property access (e.g., `title[lang]`, `title.en`) across all main pages:
-  - `ReaderPage.tsx`
-  - `WebtoonDetailPage.tsx`
-  - `CoinsPage.tsx`
-  - `AnalyticsPage.tsx` (Admin)
-  - `ActivityLogPage.tsx` (Admin)
-  - `ReportsPage.tsx` (Admin)
+```tsx
+// ❌ Before
+const isActive = (path: string) => location.pathname === path
+// '/categories'.pathname === '/categories?sort=popular' → false (always!)
+```
 
-### 2. Reader Route Synchronization
+**Solution:**
+Parse both pathname and query parameters, check if all link params match current URL params.
 
-Resolved routing issues that were causing 404 errors during episode navigation.
+**Result:** Popular and New Releases links now show active state when their query matches the current URL.
 
-#### App.tsx Fixes
-- Changed the reader route parameter from `:episodeId` to `:episodeNumber` to match the variables used in `useParams()` and navigation links.
-- Verified that all `<Link>` components in the webtoon detail page correctly pass the `episodeNumber`.
+### 2. Fixed: Multiple Items Active at Once
 
-### 3. Production Readiness Audit
+**Root Cause:**
+After fix #1, navigating to `/categories?sort=popular` caused BOTH "Categories" and "Popular" to show as active. The user pointed out that since all three items lead to the same Categories page, only ONE should be active at a time.
 
-Conducted a comprehensive audit of the entire platform's stability.
+**Solution:**
+For links without query params, check if any more specific link with the same pathname has a matching query. If yes, this link should NOT be active.
 
-#### Build Integrity
-- Validated production builds (`npm run build`) for both the main Website and Admin Dashboard.
-- Verified Storybook builds (`npm run build-storybook`) to ensure component documentation is stable.
-- Confirmed that linting and formatting rules are satisfied.
+**Active State Matrix (After Fix):**
+
+| URL | Categories | Popular | New Releases |
+|-----|:----------:|:-------:|:------------:|
+| `/categories` | ✅ | ❌ | ❌ |
+| `/categories?sort=popular` | ❌ | ✅ | ❌ |
+| `/categories?sort=new` | ❌ | ❌ | ✅ |
+| `/categories?genre=action` | ✅ | ❌ | ❌ |
+
+**Result:** Only the most specific matching link shows as active.
+
+### 3. Changed: Removed "Home" Menu Item
+
+**Reason:** The WebPad logo already serves as a way to return to the home page. Having a "Home" menu item was redundant and cluttered the navigation.
+
+**Change:**
+```tsx
+// ❌ Before - 4 menu items
+const navLinks = [
+  { name: t('nav.home'), path: '/' },
+  { name: t('categories.title'), path: '/categories' },
+  { name: t('home.trendingNow'), path: '/categories?sort=popular' },
+  { name: t('home.newReleases'), path: '/categories?sort=new' },
+]
+
+// ✅ After - 3 menu items (Home removed)
+const navLinks = [
+  { name: t('categories.title'), path: '/categories' },
+  { name: t('home.trendingNow'), path: '/categories?sort=popular' },
+  { name: t('home.newReleases'), path: '/categories?sort=new' },
+]
+```
+
+**Result:**
+- Logo click still navigates to home (no functionality lost)
+- Cleaner navigation menu
+- Works on both desktop and mobile menus (both use `navLinks`)
 
 ---
 
@@ -54,50 +82,62 @@ Conducted a comprehensive audit of the entire platform's stability.
 
 | File | Changes |
 | ---- | ------- |
-| `packages/shared/src/types.ts` | Updated ActivityLog, Report, Transaction to BilingualText; Added SharedData |
-| `packages/shared/src/data.ts` | Synchronized mock data with bilingual schema; Re-imported SharedData |
-| `src/App.tsx` | Fixed reader route parameter (`:episodeId` -> `:episodeNumber`) |
-| `CHANGELOG.md` | Added Session 9 documentation |
+| `src/components/Navigation/Navigation.tsx` | Fixed `isActive` function (2 issues) + Removed Home menu item |
+| `CHANGELOG.md` | Added Session 13 documentation |
 | `LAST_SESSION.md` | Updated session summary |
+
+---
+
+## Verification Results
+
+| Check | Result | Details |
+| ----- | ------ | ------- |
+| **TypeScript** | ✅ Pass | 0 errors |
+| **Build** | ✅ Pass | Built in 23.55s |
+| **Lint** | ✅ Pass | 0 issues |
+| **HomePage Tests** | ✅ Pass | 9/9 tests passing |
 
 ---
 
 ## Project Status Summary
 
-### Key Routes
+### Sessions Overview
 
-| Feature | Route | Status |
-| ------- | ----- | ------ |
-| Home | `/` | ✅ Working |
-| Categories | `/categories` | ✅ Working |
-| Webtoon Detail | `/webtoon/:id` | ✅ Working |
-| Reader | `/read/:webtoonId/:episodeNumber` | ✅ Fixed |
-| Coins | `/coins` | ✅ Working |
+| Session | Focus | Changes |
+| ------- | ----- | ------- |
+| Session 9 | i18n Migration | Unified BilingualText architecture |
+| Session 10 | UI/UX Deep Scan | 15 improvements (accessibility, animations, loading) |
+| Session 11 | Responsive Design | 15 improvements (all devices, all sizes) |
+| Session 12 | Critical Bug Fixes | 2 fixes (cover images + categories filter) |
+| Session 13 | Header Navigation | 3 fixes (active state + query params + remove Home) |
+| **Total** | **All Pages** | **35 unique improvements + 4 critical fixes** |
 
-### Phase Completion
+### Navigation Active State Logic
 
-| Phase | Description | Status |
-| ----- | ----------- | ------ |
-| Phase 1-7 | Product Features | ✅ Complete |
-| Phase 8 | Backend API | ❌ Not Started |
-| Phase 9 | Admin Dashboard | ✅ Complete |
-| Phase 10 | Testing & Optimization | ✅ Complete |
-| Phase 11 | Internationalization | ✅ Complete |
+The new `isActive` function uses specificity-based matching:
+1. Pathname must match
+2. If link has query params, all must match current URL
+3. If link has NO query params, check no more specific link matches first
+
+This ensures only ONE menu item is active at a time, matching the user's UX expectation.
 
 ---
 
 ## Next Steps
 
-### 1. Phase 8: Backend Implementation
-- Begin implementing real CRUD operations using the established `BilingualText` interfaces.
-- Transition from local mock data to a live database.
+### 1. Apply Same Active State Pattern to Mobile Menu
+The mobile menu uses the same `navLinks` and `isActive`, so it should already work. Verify in browser.
 
-### 2. Deployment
-- Perform final production build checks on the actual deployment environment (Vercel).
-- Monitor for any runtime rendering issues related to the new data structure.
+### 2. Pre-existing Issue to Address
+- LoginPage test failure: `auth.signUp` translation is "Sign Up" but test expects "Sign up for free"
+- Location: `src/pages/auth/LoginPage.test.tsx:22-26`
+
+### 3. Phase 8: Backend Implementation
+- Begin implementing real CRUD operations
+- Transition from local mock data to a live database
 
 ---
 
 ## Session End
 
-**Status:** Session 9 complete. Platform-wide bilingual migration finalized. Reader routing synchronized. Production build verified.
+**Status:** Session 13 complete. Three Header navigation issues fixed: active state for query param links, single active item at a time, and removed redundant Home menu item. Build and tests verified. Browser testing recommended for final confirmation.

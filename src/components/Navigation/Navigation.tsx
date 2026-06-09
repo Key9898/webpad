@@ -16,7 +16,6 @@ const Navigation = () => {
 
   const navLinks = useMemo(
     () => [
-      { name: t('nav.home'), path: '/' },
       { name: t('categories.title'), path: '/categories' },
       { name: t('home.trendingNow'), path: '/categories?sort=popular' },
       { name: t('home.newReleases'), path: '/categories?sort=new' },
@@ -24,7 +23,35 @@ const Navigation = () => {
     [t]
   )
 
-  const isActive = (path: string) => location.pathname === path
+  const isActive = (path: string) => {
+    const [linkPathname, linkSearch] = path.split('?')
+    if (location.pathname !== linkPathname) return false
+
+    // For links with query params, check if all params match
+    if (linkSearch) {
+      const linkParams = new URLSearchParams(linkSearch)
+      const currentParams = new URLSearchParams(location.search.replace('?', ''))
+      for (const [key, value] of linkParams) {
+        if (currentParams.get(key) !== value) return false
+      }
+      return true
+    }
+
+    // For links without query params, only active if NO more specific link matches
+    const currentParams = new URLSearchParams(location.search.replace('?', ''))
+    const hasMoreSpecificMatch = navLinks.some((otherLink) => {
+      if (otherLink.path === path) return false
+      const [otherPathname, otherSearch] = otherLink.path.split('?')
+      if (otherPathname !== linkPathname || !otherSearch) return false
+      const otherParams = new URLSearchParams(otherSearch)
+      for (const [key, value] of otherParams) {
+        if (currentParams.get(key) === value) return true
+      }
+      return false
+    })
+
+    return !hasMoreSpecificMatch
+  }
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">

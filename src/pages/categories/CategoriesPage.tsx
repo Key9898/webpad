@@ -13,8 +13,11 @@ const CategoriesPage = () => {
   const { t, i18n } = useTranslation()
   const lang = i18n.language as 'mm' | 'en'
   const [searchParams, setSearchParams] = useSearchParams()
-  const [selectedGenre, setSelectedGenre] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Read genre from URL (source of truth)
+  const genreFromUrl = searchParams.get('genre') || 'all'
+  const selectedGenre = genreFromUrl
 
   const sortFromUrl = searchParams.get('sort') as SortOption | null
   const [sortBy, setSortBy] = useState<SortOption>(sortFromUrl || 'popular')
@@ -28,6 +31,22 @@ const CategoriesPage = () => {
   const handleSortChange = (value: SortOption) => {
     setSortBy(value)
     setSearchParams({ sort: value })
+  }
+
+  // Get the Myanmar genre name from the selected slug
+  const selectedGenreName = useMemo(() => {
+    const genre = mockGenres.find((g) => g.slug === selectedGenre)
+    return genre?.name[lang] || ''
+  }, [selectedGenre, lang])
+
+  const handleGenreChange = (slug: string) => {
+    const newParams = new URLSearchParams(searchParams)
+    if (slug === 'all') {
+      newParams.delete('genre')
+    } else {
+      newParams.set('genre', slug)
+    }
+    setSearchParams(newParams)
   }
 
   const getPageTitle = () => {
@@ -44,9 +63,7 @@ const CategoriesPage = () => {
 
   const sortedAndFilteredWebtoons = useMemo(() => {
     let result = mockWebtoons.filter((webtoon) => {
-      const matchesGenre =
-        selectedGenre === 'all' ||
-        webtoon.genres.some((g) => g.toLowerCase() === selectedGenre.toLowerCase())
+      const matchesGenre = selectedGenre === 'all' || webtoon.genres.includes(selectedGenreName)
       const matchesSearch =
         webtoon.title[lang].toLowerCase().includes(searchQuery.toLowerCase()) ||
         webtoon.author.name[lang].toLowerCase().includes(searchQuery.toLowerCase())
@@ -79,7 +96,7 @@ const CategoriesPage = () => {
     }
 
     return result
-  }, [selectedGenre, searchQuery, sortBy, lang])
+  }, [selectedGenre, selectedGenreName, searchQuery, sortBy, lang])
 
   const PageIcon = getPageIcon()
 
@@ -109,7 +126,7 @@ const CategoriesPage = () => {
               <button
                 type="button"
                 key={genre.id}
-                onClick={() => setSelectedGenre(genre.slug)}
+                onClick={() => handleGenreChange(genre.slug)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition ${
                   selectedGenre === genre.slug
                     ? 'bg-primary-600 text-white'

@@ -29,37 +29,37 @@
     @apply scroll-smooth;
   }
 
-  html[lang="mm"] body,
-  html[lang="mm"] {
+  html[lang='mm'] body,
+  html[lang='mm'] {
     line-height: 1.8;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  html[lang="mm"] h1,
-  html[lang="mm"] h2,
-  html[lang="mm"] h3,
-  html[lang="mm"] h4,
-  html[lang="mm"] h5,
-  html[lang="mm"] h6 {
+  html[lang='mm'] h1,
+  html[lang='mm'] h2,
+  html[lang='mm'] h3,
+  html[lang='mm'] h4,
+  html[lang='mm'] h5,
+  html[lang='mm'] h6 {
     line-height: 1.5;
   }
 
-  html[lang="mm"] p,
-  html[lang="mm"] span,
-  html[lang="mm"] a,
-  html[lang="mm"] li,
-  html[lang="mm"] td,
-  html[lang="mm"] th,
-  html[lang="mm"] label {
+  html[lang='mm'] p,
+  html[lang='mm'] span,
+  html[lang='mm'] a,
+  html[lang='mm'] li,
+  html[lang='mm'] td,
+  html[lang='mm'] th,
+  html[lang='mm'] label {
     line-height: 1.8;
   }
 
-  html[lang="mm"] button,
-  html[lang="mm"] input,
-  html[lang="mm"] select,
-  html[lang="mm"] textarea {
+  html[lang='mm'] button,
+  html[lang='mm'] input,
+  html[lang='mm'] select,
+  html[lang='mm'] textarea {
     line-height: 1.6;
   }
 }
@@ -219,5 +219,66 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+/* ============================================ */
+/* Responsive Polish - Added 2026-04-29 (Session 11) */
+/* ============================================ */
+
+/* Safe Area Insets (notched phones like iPhone X+) */
+@layer utilities {
+  .safe-top {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+
+  .safe-bottom {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+
+  /* Landscape mobile - reduce hero padding on short screens */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .hero-landscape-adjust {
+      padding-top: 1.5rem !important;
+      padding-bottom: 1.5rem !important;
+    }
+  }
+
+  /* Print styles - optimize for printing */
+  @media print {
+    .animate-pulse,
+    .animate-spin,
+    .animate-fade-in,
+    .animate-slide-up,
+    .animate-slide-down,
+    .animate-scale-in {
+      animation: none !important;
+    }
+
+    section.bg-gradient-to-br,
+    section.bg-gradient-to-r,
+    .bg-gradient-to-br,
+    .bg-gradient-to-r {
+      background: white !important;
+      color: black !important;
+    }
+
+    .text-white,
+    .text-white\/80,
+    .text-white\/60 {
+      color: black !important;
+    }
+
+    .shadow-2xl,
+    .shadow-sm,
+    .shadow-md,
+    .shadow-lg,
+    .shadow-xl {
+      box-shadow: none !important;
+    }
+
+    .backdrop-blur {
+      backdrop-filter: none !important;
+    }
   }
 }
